@@ -154,3 +154,36 @@ auc = round(r["test_roc_auc"].mean(), 3)
 f1 = round(r["test_f1"].mean(), 3)
 print("XGBoost", auc, f1)
 rows.append(["XGBoost", auc, f1])
+
+# TASK 1: TUNING
+from sklearn.model_selection import RandomizedSearchCV
+from scipy.stats import randint, uniform
+
+lr_pipe = Pipeline([("pre", pre),
+                    ("model", LogisticRegression(max_iter=1000))])
+rf_pipe = Pipeline([("pre", pre),
+                    ("model", RandomForestClassifier(random_state=42))])
+
+searches = {
+    "Logistic Regression": (lr_pipe, {
+        "model__C": uniform(0.01, 10)}),
+    "Random Forest": (rf_pipe, {
+        "model__n_estimators": randint(100, 400),
+        "model__max_depth": randint(3, 15),
+        "model__min_samples_leaf": randint(1, 10)}),
+    "XGBoost": (xgb_pipe, {
+        "model__n_estimators": randint(100, 400),
+        "model__max_depth": randint(2, 7),
+        "model__learning_rate": uniform(0.01, 0.2),
+        "model__subsample": uniform(0.6, 0.4),
+        "model__colsample_bytree": uniform(0.6, 0.4)}),
+}
+
+best = {}
+for name, (pipe, params) in searches.items():
+    s = RandomizedSearchCV(pipe, params, n_iter=15, cv=5,
+                           scoring="roc_auc", random_state=42, n_jobs=-1)
+    s.fit(X_train_fe, y_train)
+    best[name] = s.best_estimator_
+    print(name, "best CV AUC:", round(s.best_score_, 3))
+    print("  params:", s.best_params_)
