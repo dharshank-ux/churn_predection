@@ -32,7 +32,12 @@ Final test (chosen model: Random Forest, threshold 0.318):
   90 churners missed, 284 churners caught
 - Recall 0.76, precision 0.55
 
-Top 5 drivers: (write one line each from feature_importance.png)
+Top 5 drivers:
+- Contract type: month-to-month customers can leave anytime, so offer discounts for annual plans.
+- Tenure: new customers (0-1 year) churn the most, so improve onboarding.
+- Monthly charges: high bills push customers away, so review plans and offer loyalty deals.
+- Tech support: customers without it churn more, so offer free support trials.
+- Payment method (electronic check): linked to less committed customers, so encourage auto-pay.
 
 ## Limitations
 - Only about 55% of flagged customers really churn
