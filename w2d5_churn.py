@@ -229,3 +229,27 @@ print("\nBest model:", best_name)
 print("Threshold:", round(threshold, 3))
 print("Recall:", round(rec[idx], 3), "Precision:", round(prec[idx], 3))
 print("Customers flagged:", round((p >= threshold).mean() * 100, 1), "%")
+
+# TASK 1: FEATURE IMPORTANCE
+best_model = best[best_name]
+best_model.fit(X_train_fe, y_train)
+
+names = best_model.named_steps["pre"].get_feature_names_out()
+clf = best_model.named_steps["model"]
+
+if hasattr(clf, "feature_importances_"):
+    imp = clf.feature_importances_
+else:
+    imp = np.abs(clf.coef_[0])
+
+fi = (pd.Series(imp, index=names)
+        .sort_values(ascending=False).head(10))
+print("\nTop 10 features:\n", fi)
+
+plt.figure(figsize=(8, 6))
+fi[::-1].plot(kind="barh")
+plt.title(f"Top 10 Feature Importances - {best_name}")
+plt.xlabel("Importance")
+plt.tight_layout()
+plt.savefig("feature_importance.png", dpi=150)
+plt.close()
