@@ -132,3 +132,10 @@ for name, m in models.items():
 results = pd.DataFrame(rows, columns=["Model", "CV ROC-AUC", "CV F1"])
 print("\n", results)
 results.to_csv("results.csv", index=False)
+
+# CONCLUSION
+# Logistic Regression is the best baseline (CV ROC-AUC 0.846, F1 0.589).
+# Random Forest is slightly lower (0.825, 0.551) with default settings.
+# Both clearly beat the Dummy baseline (AUC 0.50), so the features carry signal.
+# The test set has NOT been used yet; it is reserved for the final step.
+# Next: tune the models and evaluate the best one once on the test set.
