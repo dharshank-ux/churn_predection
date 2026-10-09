@@ -22,10 +22,12 @@ avg_monthly_spend, num_services, has_internet.
 ## Results
 | Model | ROC-AUC | F1 |
 |---|---|---|
-(copy the 3 rows from comparison_tuned.csv)
+| Logistic Regression | 0.846 | 0.592 |
+| Random Forest | 0.847 | 0.563 |
+| XGBoost | 0.846 | 0.629 |
 
-Final test (chosen model: __ , threshold __):
-- ROC-AUC: __   F1: __
+Final test (chosen model: Random Forest, threshold 0.318):
+- ROC-AUC: 0.844   F1: 0.635
 - Confusion matrix: 798 stayed correctly, 237 false alarms,
   90 churners missed, 284 churners caught
 - Recall 0.76, precision 0.55
