@@ -139,3 +139,18 @@ results.to_csv("results.csv", index=False)
 # Both clearly beat the Dummy baseline (AUC 0.50), so the features carry signal.
 # The test set has NOT been used yet; it is reserved for the final step.
 # Next: tune the models and evaluate the best one once on the test set.
+
+# TASK 1: XGBOOST
+from xgboost import XGBClassifier
+
+spw = (y_train == 0).sum() / (y_train == 1).sum()
+xgb = XGBClassifier(scale_pos_weight=spw,
+                    eval_metric="logloss", random_state=42)
+xgb_pipe = Pipeline([("pre", pre), ("model", xgb)])
+
+r = cross_validate(xgb_pipe, X_train_fe, y_train, cv=5,
+                   scoring=["roc_auc", "f1"])
+auc = round(r["test_roc_auc"].mean(), 3)
+f1 = round(r["test_f1"].mean(), 3)
+print("XGBoost", auc, f1)
+rows.append(["XGBoost", auc, f1])
