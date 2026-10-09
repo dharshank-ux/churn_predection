@@ -36,19 +36,19 @@ sns.barplot(x=rate.index, y=rate.values)
 plt.title("Churn rate by Contract")
 plt.ylabel("Churn rate")
 plt.savefig("chart1_contract.png")
-plt.show()
+
 # Chart 2: tenure of customers who stayed vs left
 plt.figure()
 sns.histplot(data=train, x="tenure", hue="Churn", bins=30, multiple="stack")
 plt.title("Tenure by Churn (0 = stayed, 1 = left)")
 plt.savefig("chart2_tenure.png")
-plt.show()
+
 # Chart 3: monthly charges for customers who stayed vs left
 plt.figure()
 sns.boxplot(data=train, x="Churn", y="MonthlyCharges")
 plt.title("Monthly Charges by Churn (0 = stayed, 1 = left)")
 plt.savefig("chart3_monthly.png")
-plt.show()
+
 # Chart 4: churn rate by internet service
 plt.figure()
 rate = train.groupby("InternetService")["Churn"].mean().sort_values()
@@ -56,7 +56,7 @@ sns.barplot(x=rate.index, y=rate.values)
 plt.title("Churn rate by Internet Service")
 plt.ylabel("Churn rate")
 plt.savefig("chart4_internet.png")
-plt.show()
+
 # Chart 5: churn rate by payment method
 plt.figure(figsize=(9, 5))
 rate = train.groupby("PaymentMethod")["Churn"].mean().sort_values()
@@ -66,4 +66,69 @@ plt.ylabel("Churn rate")
 plt.xticks(rotation=15)
 plt.tight_layout()
 plt.savefig("chart5_payment.png")
-plt.show()
+
+# ASSUMPTIONS AND METRIC
+# Assumptions:
+# 1. Blank TotalCharges values are new customers (tenure 0), so they are treated as missing and imputed.
+# 2. customerID is only an identifier and carries no signal, so it is dropped.
+# 3. The 20% test set is held out now and used only at the final step.
+# 4. All EDA and model choices use training data only.
+#
+# Metric I will optimise: ROC-AUC (also tracking F1).
+# Why: only about 27% of customers churn, so accuracy is misleading
+# (always predicting "stay" gives 73%). ROC-AUC measures how well the model
+# ranks likely churners above non-churners across all thresholds.
+# F1 balances precision and recall for the churn class.
+
+# TASK 2: FEATURE ENGINEERING
+def add_features(d):
+    d = d.copy()
+    d["tenure_group"] = pd.cut(d["tenure"], [-1, 12, 24, 48, 72],
+                               labels=["0-1y", "1-2y", "2-4y", "4y+"]).astype(str)
+    d["avg_monthly_spend"] = d["TotalCharges"] / d["tenure"].replace(0, 1)
+    services = ["OnlineSecurity", "OnlineBackup", "DeviceProtection",
+                "TechSupport", "StreamingTV", "StreamingMovies"]
+    d["num_services"] = (d[services] == "Yes").sum(axis=1)
+    d["has_internet"] = (d["InternetService"] != "No").astype(int)
+    return d
+
+X_train_fe = add_features(X_train)
+print(X_train_fe[["tenure", "tenure_group", "avg_monthly_spend",
+                  "num_services", "has_internet"]].head())
+
+# PREPROCESSING + MODELS
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.dummy import DummyClassifier
+from sklearn.model_selection import cross_validate
+
+num_cols = X_train_fe.select_dtypes("number").columns
+cat_cols = X_train_fe.select_dtypes(exclude="number").columns
+
+pre = ColumnTransformer([
+    ("num", Pipeline([("imp", SimpleImputer(strategy="median")),
+                      ("sc", StandardScaler())]), num_cols),
+    ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols),
+])
+
+models = {
+    "Dummy (bonus)": DummyClassifier(strategy="prior"),
+    "Logistic Regression": LogisticRegression(max_iter=1000),
+    "Random Forest": RandomForestClassifier(random_state=42),
+}
+
+rows = []
+for name, m in models.items():
+    pipe = Pipeline([("pre", pre), ("model", m)])
+    r = cross_validate(pipe, X_train_fe, y_train, cv=5,
+                       scoring=["roc_auc", "f1"])
+    rows.append([name, round(r["test_roc_auc"].mean(), 3),
+                 round(r["test_f1"].mean(), 3)])
+
+results = pd.DataFrame(rows, columns=["Model", "CV ROC-AUC", "CV F1"])
+print("\n", results)
+results.to_csv("results.csv", index=False)
