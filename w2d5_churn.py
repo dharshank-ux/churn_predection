@@ -253,3 +253,31 @@ plt.xlabel("Importance")
 plt.tight_layout()
 plt.savefig("feature_importance.png", dpi=150)
 plt.close()
+X_test_fe = add_features(X_test)
+print(list(X_test_fe.columns) == list(X_train_fe.columns))
+
+# TASK 2: FINAL TEST EVALUATION (run once)
+from sklearn.metrics import (confusion_matrix, ConfusionMatrixDisplay,
+                             classification_report)
+import joblib
+
+proba = best_model.predict_proba(X_test_fe)[:, 1]
+pred = (proba >= threshold).astype(int)
+
+print("\nFINAL TEST RESULTS -", best_name)
+print("Threshold:", round(threshold, 3))
+print("ROC-AUC:", round(roc_auc_score(y_test, proba), 3))
+print("F1:", round(f1_score(y_test, pred), 3))
+print(classification_report(y_test, pred))
+
+cm = confusion_matrix(y_test, pred)
+print("Confusion matrix:\n", cm)
+ConfusionMatrixDisplay(cm, display_labels=["Stay", "Churn"]).plot()
+plt.title("Confusion Matrix - Test Set")
+plt.savefig("confusion_matrix.png", dpi=150)
+plt.close()
+
+# Save model and threshold
+joblib.dump(best_model, "model.joblib")
+joblib.dump(threshold, "threshold.joblib")
+print("Saved model.joblib and threshold.joblib")
