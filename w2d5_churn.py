@@ -187,3 +187,45 @@ for name, (pipe, params) in searches.items():
     best[name] = s.best_estimator_
     print(name, "best CV AUC:", round(s.best_score_, 3))
     print("  params:", s.best_params_)
+    
+    # TASK 1: COMPARISON, ROC, THRESHOLD
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import (roc_curve, roc_auc_score, f1_score,
+                             precision_recall_curve)
+import matplotlib.pyplot as plt
+import numpy as np
+
+rows2, oof = [], {}
+plt.figure(figsize=(7, 6))
+for name, model in best.items():
+    p = cross_val_predict(model, X_train_fe, y_train, cv=5,
+                          method="predict_proba")[:, 1]
+    oof[name] = p
+    a = roc_auc_score(y_train, p)
+    f = f1_score(y_train, p >= 0.5)
+    rows2.append([name, round(a, 3), round(f, 3)])
+    fpr, tpr, _ = roc_curve(y_train, p)
+    plt.plot(fpr, tpr, label=f"{name} (AUC={a:.3f})")
+
+plt.plot([0, 1], [0, 1], "k--", label="Random")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("ROC Curves - Tuned Models")
+plt.legend()
+plt.savefig("roc_tuned.png", dpi=150)
+plt.close()
+
+final = pd.DataFrame(rows2, columns=["Model", "ROC-AUC", "F1"])
+print("\n", final)
+final.to_csv("comparison_tuned.csv", index=False)
+
+# Threshold: catch at least 75% of churners
+best_name = final.sort_values("ROC-AUC").iloc[-1]["Model"]
+p = oof[best_name]
+prec, rec, thr = precision_recall_curve(y_train, p)
+idx = np.where(rec[:-1] >= 0.75)[0][-1]
+threshold = thr[idx]
+print("\nBest model:", best_name)
+print("Threshold:", round(threshold, 3))
+print("Recall:", round(rec[idx], 3), "Precision:", round(prec[idx], 3))
+print("Customers flagged:", round((p >= threshold).mean() * 100, 1), "%")
