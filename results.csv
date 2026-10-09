@@ -1,0 +1,4 @@
+Model,CV ROC-AUC,CV F1
+Dummy (bonus),0.5,0.0
+Logistic Regression,0.846,0.589
+Random Forest,0.825,0.551
