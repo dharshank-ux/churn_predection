@@ -108,3 +108,79 @@ xgb_names = prep_xgb.get_feature_names_out()
 xgb_imp = pd.Series(xgb.feature_importances_, index=xgb_names)
 print("Top 5 XGBoost features:")
 print(xgb_imp.sort_values(ascending=False).head(5).round(3))
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+
+# Regression target: MonthlyCharges
+reg_drop = ["MonthlyCharges", "charge_ratio"]
+yr_train = X_train["MonthlyCharges"]
+yr_val = X_val["MonthlyCharges"]
+Xr_train = X_train.drop(columns=reg_drop)
+Xr_val = X_val.drop(columns=reg_drop)
+
+num_r = [c for c in num_cols if c not in reg_drop]
+
+def make_prep_reg():
+    return ColumnTransformer([
+        ("num", Pipeline([("imp", SimpleImputer(strategy="median")), ("sc", StandardScaler())]), num_r),
+        ("cat", Pipeline([("imp", SimpleImputer(strategy="most_frequent")), ("oh", OneHotEncoder(handle_unknown="ignore"))]), cat_cols),
+        ("ord", Pipeline([("imp", SimpleImputer(strategy="most_frequent")),
+                          ("oe", OrdinalEncoder(categories=[["Month-to-month", "One year", "Two year"]]))]), ordinal_cols),
+    ])
+
+reg_models = {
+    "Linear": LinearRegression(),
+    "Ridge": Ridge(alpha=1.0),
+    "Lasso": Lasso(alpha=0.1),
+}
+
+coefs = {}
+for name, m in reg_models.items():
+    p = Pipeline([("prep", make_prep_reg()), ("model", m)])
+    p.fit(Xr_train, yr_train)
+    print(name, "val R2:", round(p.score(Xr_val, yr_val), 3))
+    feat_names = p.named_steps["prep"].get_feature_names_out()
+    coefs[name] = pd.Series(p.named_steps["model"].coef_, index=feat_names)
+
+coef_table = pd.DataFrame(coefs).round(2)
+print(coef_table.head(10))
+print("Lasso zero coefficients:", (coefs["Lasso"] == 0).sum(), "out of", len(coefs["Lasso"]))
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+import matplotlib.pyplot as plt
+
+# 3 numeric columns, scaled so none dominates
+seg_cols = ["tenure", "MonthlyCharges", "TotalCharges"]
+seg = X_train[seg_cols].fillna(0)
+seg_scaled = StandardScaler().fit_transform(seg)
+
+ks = range(2, 9)
+inertias, sils = [], []
+for k in ks:
+    km = KMeans(n_clusters=k, n_init=10, random_state=42).fit(seg_scaled)
+    inertias.append(km.inertia_)
+    sils.append(silhouette_score(seg_scaled, km.labels_))
+    print(f"k={k}: inertia {km.inertia_:.0f}, silhouette {sils[-1]:.3f}")
+
+fig, ax = plt.subplots(1, 2, figsize=(10, 4))
+ax[0].plot(list(ks), inertias, marker="o")
+ax[0].set_title("Elbow curve"); ax[0].set_xlabel("k"); ax[0].set_ylabel("inertia")
+ax[1].plot(list(ks), sils, marker="o", color="green")
+ax[1].set_title("Silhouette score"); ax[1].set_xlabel("k"); ax[1].set_ylabel("silhouette")
+plt.tight_layout()
+plt.savefig("kmeans_elbow_silhouette.png")
+plt.show()
+best_k = 3
+km = KMeans(n_clusters=best_k, n_init=10, random_state=42).fit(seg_scaled)
+seg_df = X_train[seg_cols].copy()
+seg_df["cluster"] = km.labels_
+seg_df["churn"] = y_train.values
+print(seg_df.groupby("cluster").agg(
+    customers=("tenure", "size"),
+    avg_tenure=("tenure", "mean"),
+    avg_monthly=("MonthlyCharges", "mean"),
+    avg_total=("TotalCharges", "mean"),
+    churn_rate=("churn", "mean"),
+).round(1))
+# Segment 0: new customers, low tenure, high churn
+# Segment 1: loyal customers, long tenure, high total spend, low churn
+# Segment 2: mid tenure, high monthly charges
