@@ -181,6 +181,6 @@ print(seg_df.groupby("cluster").agg(
     avg_total=("TotalCharges", "mean"),
     churn_rate=("churn", "mean"),
 ).round(1))
-# Segment 0: new customers, low tenure, high churn
-# Segment 1: loyal customers, long tenure, high total spend, low churn
-# Segment 2: mid tenure, high monthly charges
+# Segment 0: (low/high tenure, low/high monthly charge, churn rate) -> your label
+# Segment 1: ...
+# Segment 2: new-ish customers (~13 months), high monthly charge (~75), about 50% churn -> highest risk
