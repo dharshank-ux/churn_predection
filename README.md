@@ -28,13 +28,16 @@ Split 60/20/20, stratified, random_state=42.
 ## Task 4: Evaluation and tuning
 - Accuracy misleads because about 73% of customers stay.
 - Threshold 0.29 gives recall 0.75 at precision 0.53.
-- Validation AUC: Random Forest (tuned) 0.837, XGBoost (tuned) 0.839.
+- Random Forest tuned: best CV AUC 0.847 (max_depth 5, min_samples_leaf 5, n_estimators 200).
+- XGBoost tuned: best CV AUC 0.849 (subsample 0.7, n_estimators 200, max_depth 3, learning_rate 0.01).
+- Validation AUC: Random Forest 0.837, XGBoost 0.839.
 - Best model: XGBoost (tuned) | Test ROC-AUC 0.84 | F1 0.51
 - Test set: accuracy 0.795, precision 0.694, recall 0.406.
-- Regression (Ridge vs mean baseline): mean baseline MAE 26.84, RMSE 30.58, R2 0.00. Ridge: MAE _, RMSE _, R2 _ (copy from your terminal).
+- Regression (Ridge vs mean baseline): Ridge MAE 0.78, RMSE 1.03, R2 0.999. Mean baseline MAE 26.84, RMSE 30.58, R2 0.00.
 
 ## Decisions
 - Telco has no loan amount or date, so I used MonthlyCharges and tenure instead.
 - The test set was used once, at the very end.
 - charge_ratio was removed for the regression task because it is built from the target.
+- Ridge R2 is very high because TotalCharges is almost MonthlyCharges times tenure, so the target is easy to rebuild from other columns.
 - At the default 0.5 threshold recall is only 0.41. Lowering the threshold to about 0.29 would catch more churners, at the cost of more false alarms.
