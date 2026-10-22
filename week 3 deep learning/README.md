@@ -12,3 +12,5 @@
 - Confusion matrices: cm_category.png, cm_priority.png
 - Saved models: baseline_category.joblib, baseline_priority.joblib
 - Note: scores are perfect because the data is synthetic (made from templates).
+- GloVe averaged sentence vectors + Logistic Regression: accuracy 1.0, macro F1 1.0 (run in Colab)
+- TF-IDF: accuracy 1.0, macro F1 1.0. Both perfect because the tickets are template-generated; TF-IDF is simpler and faster, so I would choose it.
