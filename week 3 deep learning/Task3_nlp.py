@@ -47,4 +47,5 @@ for i, c in enumerate(clf.classes_):
     print(c, "->", list(top))
 # GloVe part (nearest words, king - man + woman, sentence vectors)
 # was run in Google Colab because gensim does not install on Python 3.14.
+
     

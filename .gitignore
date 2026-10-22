@@ -4,3 +4,6 @@ model_category/
 my_model/
 out/
 .pytest_cache/
+new_model/
+saved_model/
+*.zip
