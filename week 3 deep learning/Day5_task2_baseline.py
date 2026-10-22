@@ -1,3 +1,4 @@
+import time
 import pandas as pd
 import numpy as np
 import joblib
@@ -12,6 +13,7 @@ from sklearn.metrics import accuracy_score, f1_score, ConfusionMatrixDisplay
 train = pd.read_csv("train.csv")
 val = pd.read_csv("val.csv")
 
+
 def run(label):
     pipe = Pipeline([
         ("tfidf", TfidfVectorizer()),
@@ -22,28 +24,32 @@ def run(label):
         "clf__C": [0.1, 1, 10, 100],
     }
     gs = GridSearchCV(pipe, grid, cv=5, scoring="f1_macro")
+
+    t0 = time.time()
     gs.fit(train["text"], train[label])
+    print("BASELINE TRAIN TIME (s):", round(time.time() - t0, 1))
+
     model = gs.best_estimator_
     print("\n==", label, "==")
     print("best settings:", gs.best_params_)
+
+    t1 = time.time()
+    for x in val["text"][:100]:
+        model.predict([x])
+    print("BASELINE INFERENCE (ms/ticket):",
+          round((time.time() - t1) / 100 * 1000, 2))
 
     pred = model.predict(val["text"])
     print("accuracy:", accuracy_score(val[label], pred))
     print("macro F1:", f1_score(val[label], pred, average="macro"))
 
-    disp = ConfusionMatrixDisplay.from_predictions(val[label], pred, xticks_rotation=45)
-    disp.figure_.savefig("cm_" + label + ".png", bbox_inches="tight")
+    for text, true, p in list(zip(val["text"], val[label], pred))[:10]:
+        print(f"{text} | true: {true} | pred: {p}")
 
-    # 10 most confusing = lowest confidence in the true label
-    proba = model.predict_proba(val["text"])
-    classes = list(model.classes_)
-    true_idx = [classes.index(t) for t in val[label]]
-    true_conf = proba[np.arange(len(val)), true_idx]
-    worst = np.argsort(true_conf)[:10]
-    for i in worst:
-        print(val["text"].iloc[i][:80], "| true:", val[label].iloc[i], "| pred:", pred[i])
+    disp = ConfusionMatrixDisplay.from_predictions(val[label], pred)
+    disp.figure_.savefig(f"cm_{label}.png")
+    joblib.dump(model, f"baseline_{label}.joblib")
 
-    joblib.dump(model, "baseline_" + label + ".joblib")
 
 run("category")
 run("priority")
