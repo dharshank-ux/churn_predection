@@ -79,3 +79,15 @@ Empty text returns 422.
 
 
 python -m pytest -v
+
+## Task 3: Classical NLP baseline
+- Dataset: tickets.csv, 700 tickets, 5 categories (template-generated)
+- Cleaning: lowercase, punctuation removed, tokenised
+- TF-IDF + Logistic Regression: accuracy 1.0, macro F1 1.0, training time 0.05 s
+- Confusion matrix: all predictions on the diagonal (no mistakes)
+- Top words per class are sensible (billing: invoice, charged, twice; refund: refund, received, damaged)
+- Honest note: the 1.0 score is because tickets come from repeated templates, so real customer feedback would score lower
+- GloVe (glove-wiki-gigaword-50) was run in Google Colab because gensim does not install on Python 3.14
+- king - man + woman -> queen
+- Nearest to "king": prince, queen, ii, emperor, son
+- Nearest to "refund": refunds, payment, reimbursement, payments, fees
