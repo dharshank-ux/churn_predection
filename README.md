@@ -41,3 +41,41 @@ Split 60/20/20, stratified, random_state=42.
 - charge_ratio was removed for the regression task because it is built from the target.
 - Ridge R2 is very high because TotalCharges is almost MonthlyCharges times tenure, so the target is easy to rebuild from other columns.
 - At the default 0.5 threshold recall is only 0.41. Lowering the threshold to about 0.29 would catch more churners, at the cost of more false alarms.
+
+## Part 2: Ticket Classifier API
+
+A FastAPI service that predicts a ticket's category, priority and confidence.
+
+Deployed model: TF-IDF + Logistic Regression (see comparison.md).
+
+### Run
+
+
+python -m pip install fastapi uvicorn httpx pytest scikit-learn joblib pandas
+python -m uvicorn app.main:app --reload
+
+
+Docs page: http://127.0.0.1:8000/docs
+
+### Example requests
+
+
+curl http://127.0.0.1:8000/health
+
+
+
+curl -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/json" -d "{\"text\": \"I was charged twice\"}"
+
+
+Example response:
+
+
+{"category": "billing", "priority": "high", "confidence": 0.9}
+
+
+Empty text returns 422.
+
+### Run tests
+
+
+python -m pytest -v
