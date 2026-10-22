@@ -41,3 +41,53 @@ Split 60/20/20, stratified, random_state=42.
 - charge_ratio was removed for the regression task because it is built from the target.
 - Ridge R2 is very high because TotalCharges is almost MonthlyCharges times tenure, so the target is easy to rebuild from other columns.
 - At the default 0.5 threshold recall is only 0.41. Lowering the threshold to about 0.29 would catch more churners, at the cost of more false alarms.
+
+## Part 2: Ticket Classifier API
+
+A FastAPI service that predicts a ticket's category, priority and confidence.
+
+Deployed model: TF-IDF + Logistic Regression (see comparison.md).
+
+### Run
+
+
+python -m pip install fastapi uvicorn httpx pytest scikit-learn joblib pandas
+python -m uvicorn app.main:app --reload
+
+
+Docs page: http://127.0.0.1:8000/docs
+
+### Example requests
+
+
+curl http://127.0.0.1:8000/health
+
+
+
+curl -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/json" -d "{\"text\": \"I was charged twice\"}"
+
+
+Example response:
+
+
+{"category": "billing", "priority": "high", "confidence": 0.9}
+
+
+Empty text returns 422.
+
+### Run tests
+
+
+python -m pytest -v
+
+## Task 3: Classical NLP baseline
+- Dataset: tickets.csv, 700 tickets, 5 categories (template-generated)
+- Cleaning: lowercase, punctuation removed, tokenised
+- TF-IDF + Logistic Regression: accuracy 1.0, macro F1 1.0, training time 0.05 s
+- Confusion matrix: all predictions on the diagonal (no mistakes)
+- Top words per class are sensible (billing: invoice, charged, twice; refund: refund, received, damaged)
+- Honest note: the 1.0 score is because tickets come from repeated templates, so real customer feedback would score lower
+- GloVe (glove-wiki-gigaword-50) was run in Google Colab because gensim does not install on Python 3.14
+- king - man + woman -> queen
+- Nearest to "king": prince, queen, ii, emperor, son
+- Nearest to "refund": refunds, payment, reimbursement, payments, fees

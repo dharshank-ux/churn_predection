@@ -1,0 +1,30 @@
+﻿
+== category ==
+best settings: {'clf__C': 0.1, 'tfidf__ngram_range': (1, 1)}
+accuracy: 1.0
+macro F1: 1.0
+urgent: i was charged twice for order 28707 this is frustrating | true: billing | pred: billing
+hey, please send the invoice for order 89797 this is frustrating | true: billing | pred: billing
+hello team, order 51206 was delivered to the wrong address this is frustrating | true: shipping | pred: shipping
+order 76166 was delivered to the wrong address any update? | true: shipping | pred: shipping
+hello team, can i change the delivery date for order 41173 this is frustrating | true: shipping | pred: shipping
+please help. order 72228 was delivered to the wrong address this is frustrating | true: shipping | pred: shipping
+hello team, can i change the delivery date for order 53260 thanks | true: shipping | pred: shipping
+i was charged twice for order 42347 this is frustrating | true: billing | pred: billing
+please help. can i change the delivery date for order 15293 this is frustrating | true: shipping | pred: shipping
+please help. can i change the delivery date for order 32795 this is frustrating | true: shipping | pred: shipping
+
+== priority ==
+best settings: {'clf__C': 0.1, 'tfidf__ngram_range': (1, 1)}
+accuracy: 1.0
+macro F1: 1.0
+urgent: refund for order 20476 still not received this is frustrating | true: medium | pred: medium
+hi, refund for order 99021 still not received this is frustrating | true: medium | pred: medium
+urgent: my card was declined when paying for order 89276 any update? | true: medium | pred: medium
+hi, my card was declined when paying for order 91964 please help | true: medium | pred: medium
+hey, refund for order 98248 still not received thanks | true: medium | pred: medium
+hi, refund for order 57333 still not received thanks | true: medium | pred: medium
+hello team, please send the invoice for order 39669 any update? | true: low | pred: low
+my card was declined when paying for order 78110 any update? | true: medium | pred: medium
+hey, refund for order 90267 still not received | true: medium | pred: medium
+hey, refund for order 4552 still not received | true: medium | pred: medium
